@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>StockRank USA</title>
+
+  <style>
+    :root {
+      --background: #080808;
+      --surface: #111111;
+      --surface-light: #191919;
+      --border: #292929;
+      --red: #e50914;
+      --red-light: #ff3945;
+      --text: #f5f5f5;
+      --muted: #999999;
+      --green: #45df91;
+      --yellow: #ffc857;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(229, 9, 20, 0.16), transparent 35%),
+        var(--background);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 34px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--red), #740006);
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0 0 28px rgba(229, 9, 20, 0.35);
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 3vw, 2.5rem);
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 7px;
+      font-size: 0.95rem;
+    }
+
+    .last-update {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: right;
+      padding-top: 8px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 24px;
+      padding: 18px;
+      background: rgba(17, 17, 17, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .exchange-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid #4a4a4a;
+      border-radius: 10px;
+      padding: 11px 22px;
+      color: var(--text);
+      background: var(--surface-light);
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      border-color: var(--red-light);
+      transform: translateY(-1px);
+    }
+
+    button.active {
+      border-color: var(--red);
+      background: linear-gradient(135deg, var(--red), #9c0008);
+      box-shadow: 0 0 18px rgba(229, 9, 20, 0.3);
+    }
+
+    .refresh-button {
+      background: transparent;
+      color: var(--red-light);
+      border-color: var(--red);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .summary-value {
+      margin-top: 8px;
+      font-size: 1.7rem;
+      font-weight: bold;
+    }
+
+    .table-card {
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-header h2 {
+      font-size: 1.05rem;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: collapse;
+    }
+
+    th {
+      padding: 14px 12px;
+      background: #1c1c1c;
+      color: #cfcfcf;
+      font-size: 0.73rem;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 15px 12px;
+      border-bottom: 1px solid var(--border);
+      color: #dddddd;
+      font-size: 0.88rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: #1a1a1a;
+    }
+
+    .position {
+      color: var(--muted);
+      font-weight: bold;
+    }
+
+    .ticker {
+      color: var(--red-light);
+      font-size: 0.98rem;
+      font-weight: bold;
+    }
+
+    .score {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .score-high {
+      color: var(--green);
+    }
+
+    .score-medium {
+      color: var(--yellow);
+    }
+
+    .score-low {
+      color: var(--red-light);
+    }
+
+    .badge {
+      display: inline-block;
+      min-width: 48px;
+      padding: 5px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: bold;
+    }
+
+    .badge-yes {
+      color: var(--green);
+      background: rgba(69, 223, 145, 0.12);
+    }
+
+    .badge-no {
+      color: var(--red-light);
+      background: rgba(229, 9, 20, 0.12);
+    }
+
+    .badge-na {
+      color: var(--muted);
+      background: rgba(153, 153, 153, 0.12);
+    }
+
+    .loading,
+    .empty,
+    .error {
+      padding: 42px 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .error {
+      color: var(--red-light);
+    }
+
+    footer {
+      padding: 24px 0 4px;
+      color: #686868;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        width: min(100% - 20px, 1180px);
+        padding-top: 24px;
+      }
+
+      header,
+      .controls {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .last-update {
+        text-align: left;
+      }
+
+      .exchange-buttons {
+        width: 100%;
+      }
+
+      .exchange-buttons button {
+        flex: 1;
+      }
+
+      .refresh-button {
+        width: 100%;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">S</div>
+
+        <div>
+          <h1>StockRank USA</h1>
+          <p class="subtitle">
+            Ranking baseado em cinco critérios de estrutura financeira
+          </p>
+        </div>
+      </div>
+
+      <div class="last-update" id="lastUpdate">
+        Última atualização: aguardando dados
+      </div>
+    </header>
+
+    <section class="controls">
+      <div class="exchange-buttons">
+        <button class="exchange-button active" data-exchange="NASDAQ">
+          NASDAQ
+        </button>
+
+        <button class="exchange-button" data-exchange="NYSE">
+          NYSE
+        </button>
+      </div>
+
+      <button class="refresh-button" id="refreshButton">
+        Atualizar ranking
+      </button>
+    </section>
+
+    <section class="summary">
+      <div class="summary-card">
+        <div class="summary-label">Bolsa selecionada</div>
+        <div class="summary-value" id="selectedExchange">NASDAQ</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Empresas analisadas</div>
+        <div class="summary-value" id="companyCount">-</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Maior pontuação</div>
+        <div class="summary-value" id="highestScore">-</div>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="table-header">
+        <h2>Top 25 ações classificadas</h2>
+        <div class="status" id="status">Carregando...</div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Pontuação</th>
+              <th>Caixa > Dívida</th>
+              <th>Dívida / PL</th>
+              <th>Sem Pref.</th>
+              <th>Lucros Retidos</th>
+              <th>Tesouraria</th>
+            </tr>
+          </thead>
+
+          <tbody id="rankingBody">
+            <tr>
+              <td colspan="8" class="loading">
+                Carregando ranking...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      Dados fundamentalistas consultados via Yahoo Finance.<br>
+      Cotações e informações podem apresentar atraso. Projeto educacional,
+      não constitui recomendação de investimento.
+    </footer>
+  </main>
+
+  <script>
+    /*
+      IMPORTANTE:
+      Depois que o backend for publicado no Render,
+      substituiremos este endereço pelo endereço real da API.
+    */
+    const API_BASE = "https://SEU-BACKEND.onrender.com/api/ranking";
+
+    const rankingBody = document.getElementById("rankingBody");
+    const statusElement = document.getElementById("status");
+    const selectedExchangeElement = document.getElementById("selectedExchange");
+    const companyCountElement = document.getElementById("companyCount");
+    const highestScoreElement = document.getElementById("highestScore");
+    const lastUpdateElement = document.getElementById("lastUpdate");
+    const refreshButton = document.getElementById("refreshButton");
+    const exchangeButtons = document.querySelectorAll(".exchange-button");
+
+    let currentExchange = "NASDAQ";
+
+    function createBadge(value) {
+      if (value === null || value === undefined) {
+        return '<span class="badge badge-na">N/D</span>';
+      }
+
+      if (value === true) {
+        return '<span class="badge badge-yes">SIM</span>';
+      }
+
+      return '<span class="badge badge-no">NÃO</span>';
+    }
+
+    function getScoreClass(score) {
+      if (score >= 4) {
+        return "score-high";
+      }
+
+      if (score >= 2) {
+        return "score-medium";
+      }
+
+      return "score-low";
+    }
+
+    function showLoading() {
+      rankingBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="loading">
+            Consultando dados financeiros...
+          </td>
+        </tr>
+      `;
+
+      statusElement.textContent = "Carregando...";
+    }
+
+    function showError(message) {
+      rankingBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="error">
+            ${message}
+          </td>
+        </tr>
+      `;
+
+      statusElement.textContent = "Erro";
+    }
+
+    async function loadRanking(exchange) {
+      currentExchange = exchange;
+      showLoading();
+
+      selectedExchangeElement.textContent = exchange;
+
+      try {
+        const response = await fetch(
+          `${API_BASE}?exchange=${encodeURIComponent(exchange)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Resposta inválida do servidor");
+        }
+
+        const data = await response.json();
+
+        /*
+          O backend retorna:
+          {
+            exchange: "NASDAQ",
+            count: 25,
+            results: [...]
+          }
+        */
+        const results = data.results || [];
+
+        if (results.length === 0) {
+          rankingBody.innerHTML = `
+            <tr>
+              <td colspan="8" class="empty">
+                Nenhuma empresa pôde ser analisada.
+              </td>
+            </tr>
+          `;
+
+          companyCountElement.textContent = "0";
+          highestScoreElement.textContent = "-";
+          statusElement.textContent = "Sem dados";
+          return;
+        }
+
+        companyCountElement.textContent = results.length;
+        highestScoreElement.textContent = `${results[0].score}/5`;
+        statusElement.textContent = `${results.length} empresas carregadas`;
+
+        rankingBody.innerHTML = results.map((item, index) => {
+          const debtToEquity =
+            item.debt_to_equity === null ||
+            item.debt_to_equity === undefined
+              ? "N/D"
+              : item.debt_to_equity;
+
+          return `
+            <tr>
+              <td class="position">${index + 1}</td>
+
+              <td class="ticker">${item.ticker}</td>
+
+              <td class="score ${getScoreClass(item.score)}">
+                ${item.score}/5
+              </td>
+
+              <td>${createBadge(item.cash_gt_debt)}</td>
+
+              <td>${debtToEquity}</td>
+
+              <td>${createBadge(item.preferred_ok)}</td>
+
+              <td>${createBadge(item.retained_growth_ok)}</td>
+
+              <td>${createBadge(item.treasury_ok)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        lastUpdateElement.textContent =
+          `Última atualização: ${new Date().toLocaleString("pt-BR")}`;
+
+      } catch (error) {
+        console.error(error);
+
+        showError(
+          "Não foi possível conectar ao backend. O servidor pode ainda não estar publicado ou pode estar iniciando."
+        );
+      }
+    }
+
+    exchangeButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        exchangeButtons.forEach(item => {
+          item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        loadRanking(button.dataset.exchange);
+      });
+    });
+
+    refreshButton.addEventListener("click", () => {
+      loadRanking(currentExchange);
+    });
+
+    loadRanking("NASDAQ");
+  </script>
+</body>
+</html>
