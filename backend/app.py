@@ -1,43 +1,35 @@
-import os
-
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-
 from scoring import get_metrics, score_company
-from tickers import EXCHANGES
-
 
 app = Flask(__name__)
 CORS(app)
 
+NASDAQ_TICKERS = [
+    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "PEP",
+    "COST", "ADBE", "NFLX", "AMD", "INTC", "CSCO", "CMCSA", "TXN", "QCOM",
+    "INTU", "AMGN", "HON", "SBUX", "GILD", "MDLZ", "ADI"
+]
 
-@app.route("/")
-def home():
-    return jsonify({
-        "status": "online",
-        "message": "API do Ranking de Ações está funcionando"
-    })
+NYSE_TICKERS = [
+    "JPM", "V", "JNJ", "WMT", "PG", "MA", "HD", "XOM", "CVX", "BAC", "KO",
+    "PFE", "DIS", "MRK", "VZ", "T", "WFC", "MCD", "NKE", "ORCL", "CAT",
+    "GS", "IBM", "BA", "GE"
+]
 
 
 @app.route("/api/ranking")
 def ranking():
     exchange = request.args.get("exchange", "NASDAQ").upper()
 
-    if exchange not in EXCHANGES:
-        return jsonify({
-            "error": "Bolsa inválida. Use NASDAQ ou NYSE."
-        }), 400
+    tickers = NASDAQ_TICKERS if exchange == "NASDAQ" else NYSE_TICKERS
 
-    tickers = EXCHANGES[exchange]
     results = []
 
     for ticker in tickers:
-        print(f"Buscando dados de {ticker}...")
-
         metrics = get_metrics(ticker)
 
-        if metrics is None:
-            print(f"Dados insuficientes para {ticker}")
+        if metrics.get("error"):
             continue
 
         score, details = score_company(metrics)
@@ -48,27 +40,19 @@ def ranking():
             **details
         })
 
-    # Ordena pela maior pontuação.
-    # Em caso de empate, prioriza menor dívida/patrimônio.
-    results.sort(
-        key=lambda item: (
-            item["score"],
-            -(item["debt_to_equity"] or 999)
-        ),
-        reverse=True
-    )
+    results.sort(key=lambda item: item["score"], reverse=True)
 
     return jsonify({
         "exchange": exchange,
         "count": len(results),
-        "results": results[:25]
+        "results": results
     })
 
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
+@app.route("/")
+def health():
+    return jsonify({"status": "ok"})
 
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+
+if __name__ == "__main__":
+    app.run(debug=True)
