@@ -96,6 +96,7 @@
       background: rgba(17, 17, 17, 0.88);
       border: 1px solid var(--border);
       border-radius: 16px;
+      flex-wrap: wrap;
     }
 
     .exchange-buttons {
@@ -325,6 +326,89 @@
         grid-template-columns: 1fr;
       }
     }
+
+    .info-button {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid #4a4a4a;
+      font-size: 0.85rem;
+    }
+
+    .info-button:hover {
+      color: var(--red-light);
+      border-color: var(--red-light);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 82vh;
+      overflow-y: auto;
+      padding: 26px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.2rem;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 0 6px;
+    }
+
+    .modal-close:hover {
+      color: var(--red-light);
+    }
+
+    .criterion {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .criterion:last-child {
+      border-bottom: none;
+    }
+
+    .criterion h3 {
+      color: var(--red-light);
+      font-size: 0.98rem;
+      margin-bottom: 6px;
+    }
+
+    .criterion p {
+      color: #cccccc;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
   </style>
 </head>
 
@@ -360,6 +444,10 @@
 
       <button class="refresh-button" id="refreshButton">
         Atualizar ranking
+      </button>
+
+      <button class="info-button" id="infoButton">
+        Saiba mais sobre os critérios
       </button>
     </section>
 
@@ -413,13 +501,72 @@
     </section>
 
     <footer>
-  Dados fundamentalistas consultados via Yahoo Finance.<br>
-  Cotações e informações podem apresentar atraso. Projeto educacional,
-  não constitui recomendação de investimento.
-  <br><br>
-  <span style="opacity: 0.5;">Projected by Bruno Barcelos Simas</span>
-</footer>
+      Dados fundamentalistas consultados via Yahoo Finance.<br>
+      Cotações e informações podem apresentar atraso. Projeto educacional,
+      não constitui recomendação de investimento.
+      <br><br>
+      <span style="opacity: 0.5;">Projected by Bruno Barcelos Simas</span>
+    </footer>
   </main>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Os 5 critérios de Warren Buffett</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+
+      <div class="criterion">
+        <h3>1. Caixa maior que a dívida</h3>
+        <p>
+          Buffett dá preferência a empresas cujo caixa disponível seja maior
+          que o total de dívidas. Isso indica solidez financeira e reduz o
+          risco de a empresa passar por dificuldades em momentos de crise,
+          já que ela não depende de terceiros para honrar compromissos.
+        </p>
+      </div>
+
+      <div class="criterion">
+        <h3>2. Baixa relação dívida / patrimônio</h3>
+        <p>
+          Esse indicador mostra o quanto a empresa usa dívida em comparação
+          ao capital próprio dos acionistas. Quanto menor essa relação,
+          menos a empresa depende de empréstimos para crescer, o que reduz
+          o risco financeiro e os custos com juros.
+        </p>
+      </div>
+
+      <div class="criterion">
+        <h3>3. Ausência de ações preferenciais</h3>
+        <p>
+          Ações preferenciais têm prioridade de pagamento sobre os acionistas
+          comuns. Empresas sem esse tipo de ação possuem uma estrutura de
+          capital mais simples e alinhada aos interesses dos acionistas
+          ordinários, sem obrigações preferenciais competindo pelo lucro.
+        </p>
+      </div>
+
+      <div class="criterion">
+        <h3>4. Crescimento consistente dos lucros retidos</h3>
+        <p>
+          Lucros retidos são os ganhos que a empresa reinveste no próprio
+          negócio, em vez de distribuir integralmente aos acionistas. Um
+          crescimento constante mostra que a empresa gera lucro de forma
+          sustentável e sabe reinvesti-lo para gerar ainda mais valor.
+        </p>
+      </div>
+
+      <div class="criterion">
+        <h3>5. Recompra de ações em tesouraria</h3>
+        <p>
+          Quando uma empresa recompra suas próprias ações, ela sinaliza
+          confiança no próprio negócio e devolve capital aos acionistas de
+          forma eficiente. Buffett considera isso um sinal positivo de boa
+          gestão financeira.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <script>
     /*
@@ -590,6 +737,24 @@
 
     refreshButton.addEventListener("click", () => {
       loadRanking(currentExchange);
+    });
+
+    const infoButton = document.getElementById("infoButton");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalClose = document.getElementById("modalClose");
+
+    infoButton.addEventListener("click", () => {
+      modalOverlay.classList.add("active");
+    });
+
+    modalClose.addEventListener("click", () => {
+      modalOverlay.classList.remove("active");
+    });
+
+    modalOverlay.addEventListener("click", (event) => {
+      if (event.target === modalOverlay) {
+        modalOverlay.classList.remove("active");
+      }
     });
 
     loadRanking("NASDAQ");
